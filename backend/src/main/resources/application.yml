@@ -2,5 +2,10 @@ spring:
   application:
     name: agentic-analytics-backend
 
+  datasource:
+    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/datamart}
+    username: ${DATASOURCE_USERNAME:postgres}
+    password: ${DATASOURCE_PASSWORD:postgres}
+
 server:
   port: 8080

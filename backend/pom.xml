@@ -15,7 +15,7 @@
   <artifactId>agentic-analytics-backend</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <name>agentic-analytics-backend</name>
-  <description>Step 2: REST starter only — health endpoint + test</description>
+  <description>Agentic analytics backend — data mart, Spring AI agent, MCP tools</description>
 
   <properties>
     <java.version>26</java.version>
@@ -26,6 +26,17 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-webmvc</artifactId>
+    </dependency>
+
+    <!-- Data mart access -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
     </dependency>
 
     <dependency>
@@ -40,7 +51,40 @@
       <artifactId>spring-boot-starter-webmvc-test</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!-- Testcontainers: run the real schema against a real ephemeral Postgres in tests,
+         rather than mocking JDBC or trusting an H2 dialect that won't match production. -->
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-testcontainers</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- Spring Boot 4's starter-parent does NOT manage this version by default
+           (unlike Boot 3.x) — needs an explicit BOM import. -->
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>2.0.5</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <build>
     <plugins>

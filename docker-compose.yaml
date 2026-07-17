@@ -1,4 +1,7 @@
 services:
+  # NOTE: everything under db-init/ only runs on a *fresh* data volume — Postgres
+  # skips docker-entrypoint-initdb.d entirely once pgdata already has data.
+  # If you change the init script, run `docker compose down -v` first to reset it.
   postgres:
     image: pgvector/pgvector:pg16
     environment:
@@ -9,13 +12,23 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./backend/src/main/resources/db-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  # backend:            <- added in the step where we scaffold the Spring Boot app
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      - DATASOURCE_URL=jdbc:postgresql://postgres:5432/datamart
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   # frontend-react:     <- added once the React UI exists (profile: react)
   # frontend-angular:   <- added once the Angular UI exists (profile: angular)
 

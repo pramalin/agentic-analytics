@@ -1,0 +1,27 @@
+2026.07.17 07:28:02 INFO  Started: Metals version 1.6.7 in folders '/home/pramalin/work/agentic-analytics' for client Visual Studio Code 1.109.5.
+2026.07.17 07:28:02 INFO  Memory monitor started
+2026.07.17 07:28:03 WARN  Using H2 2.4.240 which is newer than the version Flyway has been verified with. The latest verified version of H2 is 2.3.232.
+2026.07.17 07:28:03 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java. Using fallback presentation compiler.
+2026.07.17 07:28:04 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java. Using fallback presentation compiler.
+2026.07.17 07:28:04 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java. Using fallback presentation compiler.
+2026.07.17 07:28:33 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java. Using fallback presentation compiler.
+2026.07.17 07:29:54 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java. Using fallback presentation compiler.
+2026.07.17 07:29:54 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java. Using fallback presentation compiler.
+2026.07.17 07:29:54 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java. Using fallback presentation compiler.
+2026.07.17 07:29:54 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java. Using fallback presentation compiler.
+2026.07.17 07:29:55 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java. Using fallback presentation compiler.
+2026.07.17 07:29:55 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java. Using fallback presentation compiler.
+2026.07.17 07:30:33 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/main/java/com/example/agenticanalytics/datamart/DataMartQueryService.java. Using fallback presentation compiler.
+2026.07.17 07:30:33 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/main/java/com/example/agenticanalytics/datamart/DataMartQueryService.java. Using fallback presentation compiler.
+2026.07.17 07:30:33 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/main/java/com/example/agenticanalytics/datamart/DataMartQueryService.java. Using fallback presentation compiler.
+2026.07.17 07:30:33 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/main/java/com/example/agenticanalytics/datamart/DataMartQueryService.java. Using fallback presentation compiler.
+2026.07.17 07:30:33 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/main/java/com/example/agenticanalytics/datamart/DataMartQueryService.java. Using fallback presentation compiler.
+2026.07.17 07:30:35 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/main/java/com/example/agenticanalytics/datamart/DataMartQueryService.java. Using fallback presentation compiler.
+2026.07.17 07:31:03 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/main/java/com/example/agenticanalytics/datamart/DataMartQueryService.java. Using fallback presentation compiler.
+2026.07.17 07:31:03 WARN  no build target for: /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java
+2026.07.17 07:31:03 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java. Using fallback presentation compiler.
+2026.07.17 07:31:03 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java. Using fallback presentation compiler.
+2026.07.17 07:31:03 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java. Using fallback presentation compiler.
+2026.07.17 07:31:03 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java. Using fallback presentation compiler.
+2026.07.17 07:31:03 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java. Using fallback presentation compiler.
+2026.07.17 07:31:05 INFO  no build target found for /home/pramalin/work/agentic-analytics/backend/src/test/java/com/example/agenticanalytics/datamart/DataMartQueryServiceIT.java. Using fallback presentation compiler.
