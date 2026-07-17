@@ -213,7 +213,45 @@ as of Step 5b — see that step's roadmap entry for what changed and why.
     not guarantees, no matter how forcefully worded. The durable fix is
     Step 6: hand the model the actual value convention as grounded
     context, so it never has to decide whether to double-check at all.
-- [ ] **Step 6** — RAG: schema docs into pgvector, retrieval advisor.
+- [x] **Step 6** — RAG: schema docs into pgvector, retrieval advisor.
+  - `SchemaDocIngestor` embeds `schema-docs/*.md` into pgvector on startup
+    using a local ONNX embedding model (`spring-ai-starter-model-transformers`,
+    `all-MiniLM-L6-v2` bundled in the jar — no download, no API cost,
+    deliberately independent of which chat provider is active).
+  - `ChatClientConfig` adds a `RetrievalAugmentationAdvisor` ahead of the
+    memory advisor — retrieved schema facts get injected into every request.
+  - `transaction.md` explicitly documents the uppercase `status` convention
+    that caused the Step 5i/5j bug — this is the direct fix for that bug,
+    not just a generic RAG demo. Full rationale: [`docs/rag.md`](docs/rag.md).
+  - `spring.ai.model.embedding` changed from `none` (Step 5f) to
+    `transformers` — the Ollama-embedding eager-connect crash that Step 5f
+    worked around doesn't apply here, since transformers embeddings never
+    make a network call.
+  - New test: `SchemaDocIngestorIT` — confirms ingestion actually runs and
+    that a status-casing question retrieves the doc that documents it, not
+    just that the app doesn't crash on startup.
+  - `AgenticAnalyticsApplicationTests` now uses Testcontainers (previously
+    it didn't need a real database at all; the new `VectorStore` bean does).
+- [x] **Step 6a** — Removed `AgentTools`, `QueryGuard`, and
+  `DataMartQueryService` as dead code.
+  - Prompted by a direct question about whether `QueryGuard` was still
+    doing anything, given the Step 5b MCP pivot moved real enforcement to
+    the `mcp_reader` DB role. Answer: no — nothing had called `AgentTools`
+    (and therefore `QueryGuard`/`DataMartQueryService`, which it was the
+    only caller of) since Step 5b. Kept as a "documented fallback" for a
+    few steps, but a fallback nobody had ever exercised is just clutter
+    with extra steps.
+  - `docs/query-guard.md` removed with it (the code it documented no longer
+    exists); `docs/mcp-gateway.md` updated to stop describing "two layers
+    of enforcement" — there's one now, the DB role, on purpose.
+  - One thing preserved deliberately rather than deleted along with
+    everything else: the `declinedRowsAlwaysHaveADeclineReason` regression
+    check from the removed `DataMartQueryServiceIT` — a real bug in
+    `db-init/01_init_datamart.sql` from Step 4 (status and decline_reason
+    drawn from independent `RANDOM()` calls) that this test would have
+    caught. Moved to a new, smaller `SeedDataIT` that only checks the seed
+    data's self-consistency via plain `JdbcTemplate`, with no dependency on
+    the application-layer class that got removed.
 - [ ] **Step 7** — React frontend (or Angular console, matching the
   reference repo — TBD when we get there).
 - [ ] **Step 8** — Both frontends switchable via compose profiles, if we
@@ -315,7 +353,7 @@ OPENAI_API_KEY=sk-... mvn spring-boot:run
 SPRING_PROFILES_ACTIVE=docker-model-runner mvn spring-boot:run
 ```
 
-Run the tests (Docker must be running — `DataMartQueryServiceIT` spins up its
+Run the tests (Docker must be running — several test classes spin up their
 own Postgres container via Testcontainers; no real API key, local model, or
 MCP gateway is needed — all disabled/placeholder'd for the full-context tests):
 ```bash
@@ -324,12 +362,10 @@ cd application && mvn test
 
 ## Docs
 
-- [`docs/query-guard.md`](docs/query-guard.md) — design, guarantees, and
-  known limitations of the app-layer read-only SQL enforcement (superseded
-  as the primary enforcement mechanism by Step 5b's DB-layer role, but still
-  tested and still a valid second layer).
 - [`docs/mcp-gateway.md`](docs/mcp-gateway.md) — why tools moved to the MCP
   gateway, what's verified vs. inferred, and troubleshooting steps.
+- [`docs/rag.md`](docs/rag.md) — why schema-doc RAG exists (directly tied to
+  the Step 5i/5j status-casing bug), how it works, and what it doesn't solve.
 
 ## Repo layout (grows as we go)
 
@@ -344,8 +380,8 @@ agentic-analytics/
 ├── .env.example
 ├── README.md
 ├── docs/
-│   ├── query-guard.md
-│   └── mcp-gateway.md
+│   ├── mcp-gateway.md
+│   └── rag.md
 └── application/
     ├── Dockerfile
     ├── pom.xml
@@ -356,18 +392,17 @@ agentic-analytics/
         │   │   ├── ApplicationInfoController.java
         │   │   └── QuestionController.java
         │   ├── config/ChatClientConfig.java
-        │   ├── tools/AgentTools.java        # superseded, kept for reference
-        │   └── datamart/
-        │       ├── QueryGuard.java
-        │       └── DataMartQueryService.java
+        │   └── rag/SchemaDocIngestor.java
         ├── main/resources/
         │   ├── application.yml
         │   ├── application-docker-model-runner.yml
-        │   └── db-init/01_init_datamart.sql
+        │   ├── db-init/01_init_datamart.sql
+        │   └── schema-docs/
+        │       ├── transaction.md
+        │       └── merchant_and_region.md
         └── test/java/com/example/agenticanalytics/
             ├── AgenticAnalyticsApplicationTests.java
             ├── web/QuestionControllerTest.java
-            └── datamart/
-                ├── QueryGuardTest.java
-                └── DataMartQueryServiceIT.java
+            ├── rag/SchemaDocIngestorIT.java
+            └── seed/SeedDataIT.java
 ```

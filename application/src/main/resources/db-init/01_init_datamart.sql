@@ -53,10 +53,11 @@ SELECT
     ELSE NULL END
 FROM seed;
 
--- Read-only role for the MCP gateway's postgres server (see mcp-config.yaml).
--- Unlike QueryGuard (an application-layer check the Spring app could
--- theoretically be coded around), REVOKE/GRANT here is enforced by Postgres
--- itself regardless of which client connects as this role.
+-- Read-only role for the MCP gateway's database-server (see mcp-config.yaml).
+-- This REVOKE/GRANT is enforced by Postgres itself, regardless of which
+-- client connects as this role — the sole read-only enforcement mechanism
+-- in this project (an earlier app-layer check, QueryGuard, was removed as
+-- dead code once this role became the real enforcement — see docs/mcp-gateway.md).
 CREATE ROLE mcp_reader WITH LOGIN PASSWORD 'mcp_reader_password';
 GRANT CONNECT ON DATABASE datamart TO mcp_reader;
 GRANT USAGE ON SCHEMA public TO mcp_reader;

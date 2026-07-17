@@ -2,6 +2,11 @@ package com.example.agenticanalytics;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 /**
  * Full context-load smoke test. Supplies a placeholder Anthropic key so
@@ -22,13 +27,39 @@ import org.springframework.boot.test.context.SpringBootTest;
  * ChatClientAutoConfiguration fails with "expected single matching bean
  * but found 2"). The Anthropic side just needs the placeholder key to
  * pass startup validation — no real network call happens at bean creation.
+ *
+ * Testcontainers (Step 6): the VectorStore bean now needs a real reachable
+ * Postgres with the pgvector extension to initialize its schema on
+ * startup — previously this test didn't need a real database at all,
+ * relying on whatever happened to be reachable at localhost:5432 (or
+ * nothing, if HikariCP's connection validation is more lenient than
+ * expected). Rather than keep depending on that, this test now uses the
+ * same Testcontainers pattern used elsewhere in this test suite (e.g.
+ * SeedDataIT) for a real, predictable Postgres+pgvector instance.
+ *
+ * withDatabaseName("datamart") is required, not cosmetic: db-init's
+ * mcp_reader role setup includes `GRANT CONNECT ON DATABASE datamart`,
+ * which hardcodes that literal database name. Testcontainers defaults to a
+ * database named "test" otherwise, and that GRANT fails outright —
+ * container startup itself fails, not just a later assertion. Latent since
+ * Step 5b (when the mcp_reader role was added); never actually triggered
+ * until a full `mvn test` run genuinely reached this init script.
  */
+@Testcontainers
 @SpringBootTest(properties = {
         "spring.ai.model.chat=anthropic",
         "spring.ai.anthropic.api-key=test-placeholder-key",
         "spring.ai.mcp.client.enabled=false"
 })
 class AgenticAnalyticsApplicationTests {
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres =
+            new PostgreSQLContainer<>(DockerImageName.parse("pgvector/pgvector:pg16")
+                    .asCompatibleSubstituteFor("postgres"))
+                    .withDatabaseName("datamart")
+                    .withInitScript("db-init/01_init_datamart.sql");
 
     @Test
     void contextLoads() {

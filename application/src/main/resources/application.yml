@@ -22,15 +22,15 @@ spring:
     # spring.ai.model.chat — it has its own matchIfMissing=true default.
     # Worse than the chat case: OllamaEmbeddingAutoConfiguration calls the
     # Ollama API *at bean-creation time* to check model availability, so an
-    # unreachable localhost:11434 crashes the whole app on startup, not
-    # just fails silently — this broke every overlay that doesn't happen to
-    # run a real Ollama server at that address (which is all of them except
-    # compose.ollama.yaml). We don't need embeddings until Step 6 (RAG), so
-    # disable the whole embedding-model layer for now rather than gate it
-    # per-provider like chat.
+    # unreachable localhost:11434 crashed the whole app on startup when this
+    # was left unset (Step 5f). Now set to "transformers" (Step 6) — the
+    # local ONNX embedding model, deliberately independent of whichever
+    # chat provider is active, so RAG works identically on all three paths
+    # and never depends on a chat provider's embedding API (extra cost,
+    # extra failure mode) at all.
     model:
       chat: ${AI_MODEL_CHAT:openai}
-      embedding: none
+      embedding: transformers
 
     anthropic:
       api-key: ${ANTHROPIC_API_KEY:}
@@ -80,6 +80,15 @@ spring:
           connections:
             postgres:
               url: ${MCP_GATEWAY_URL:http://localhost:8811}
+
+    vectorstore:
+      pgvector:
+        # Matches all-MiniLM-L6-v2 (the transformers embedding model above).
+        # If this ever gets out of sync with the actual embedding model's
+        # output size, PgVectorStore fails loudly at startup rather than
+        # silently corrupting data — a mismatch here is easy to catch.
+        dimensions: 384
+        initialize-schema: true
 
   datasource:
     url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/datamart}

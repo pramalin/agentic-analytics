@@ -7,20 +7,31 @@ in-process `@Tool` class. This mirrors
 which itself models the pattern from
 [docker/compose-for-agents/langgraph](https://github.com/docker/compose-for-agents/tree/main/langgraph).
 
-## Why this instead of Step 5's in-process tools
+## Why this instead of in-process tools
 
-The in-process approach (`AgentTools`, still in the codebase, just no longer
-wired into `ChatClientConfig`) is simpler and has no extra moving parts. The
-gateway approach trades that simplicity for:
+Step 5 originally had two tool sources: an in-process `AgentTools` class
+(`@Tool`-annotated, calling the data mart directly via JDBC) and this MCP
+gateway. `AgentTools` — along with `QueryGuard` and `DataMartQueryService`,
+the app-layer read-only check and JDBC service it depended on — was removed
+in Step 6 once it was clearly established as dead code: nothing wired it
+into `ChatClientConfig` after the Step 5b MCP pivot, and it added
+maintenance surface without being reachable by any real request. If you're
+reading this after that removal and wondering why there's no in-process
+fallback anymore, that's why — it's not an oversight, it just stopped
+earning its keep once the gateway path was proven out.
+
+The gateway approach's actual advantages, for the record:
 
 - **Tool reuse across clients.** Any MCP client — not just this Spring app
   — can connect to the gateway and get the same database tools. That's the
   actual point of MCP: a shared surface, not an app-specific abstraction.
-- **Enforcement that can't be coded around.** `QueryGuard` (Step 4) is an
-  application-layer check — technically, a bug in this codebase could bypass
-  it. The gateway's database-server connects as `mcp_reader`, a genuinely
-  read-only Postgres role (see `db-init/01_init_datamart.sql`). No SQL that
-  role runs can write, full stop, regardless of what any client sends.
+- **Enforcement that can't be coded around.** An application-layer check
+  like the removed `QueryGuard` is only as good as the code path that calls
+  it — a bug in this codebase could theoretically bypass it. The gateway's
+  `database-server` connects as `mcp_reader`, a genuinely read-only Postgres
+  role (see `db-init/01_init_datamart.sql`). No SQL that role runs can
+  write, full stop, regardless of what any client sends — enforcement lives
+  in Postgres itself, not in application code.
 - **A closer match to how this gets built at a company like the one in the
   original job posting this project is aimed at** — a shared data-tooling
   team would expose MCP tools once; individual product teams' agents would
@@ -65,21 +76,20 @@ reports it has no tools available, start here:
    written so the app still starts with zero tools if the MCP client can't
    connect — you'd see the agent apologizing that it has no way to query
    the data mart, not a crash. That's a deliberate degrade-gracefully choice,
-   not a bug.
-5. If you'd rather not debug the gateway right now, `AgentTools` still works
-   as an in-process fallback — swap `ChatClientConfig`'s tool source back to
-   `.defaultTools(agentTools)` (Step 5's original approach) to unblock
-   yourself, then come back to the gateway later.
+   not a bug. (There's no in-process tool fallback to swap in anymore —
+   `AgentTools` was removed in Step 6 as dead code; see below.)
 
-## Read-only enforcement, now in two places
+## Read-only enforcement lives in one place now, deliberately
 
-`QueryGuard` still exists and is still tested (`QueryGuardTest`,
-`DataMartQueryServiceIT`), but it's no longer in the live request path for
-the primary agent flow — the gateway's `database-server` talks to Postgres
-directly, bypassing this Spring app entirely for tool calls. The DB-level
-`mcp_reader` role is what actually enforces read-only access now. Keeping
-`QueryGuard` around is still worthwhile: it's a second, independent layer if
-this project ever adds a tool that goes through the Spring app again, and
-it's a reasonable thing to point to in an interview as "I understand
-defense in depth, and I know which layer is actually doing the enforcing
-in the current architecture."
+Step 5 briefly had two layers: an application-layer `QueryGuard` (a regex
+tripwire on generated SQL) and the DB-level `mcp_reader` role. `QueryGuard`,
+`DataMartQueryService`, and the `AgentTools` that used them were removed in
+Step 6 — they were never in the live request path after the Step 5b MCP
+pivot (nothing called them), so keeping them around as an inert "second
+layer" was more clutter than defense in depth. The DB-level `mcp_reader`
+role is the actual, sole enforcement mechanism now: no SQL that role
+executes can write, regardless of what generates it or which layer of this
+codebase does or doesn't check it first. If a future tool ever goes through
+the Spring app directly again (bypassing the gateway), an app-layer check
+would be worth reintroducing at that point — not as standing insurance for
+a code path that doesn't currently exist.
