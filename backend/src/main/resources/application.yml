@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: agentic-analytics-backend
+
+server:
+  port: 8080
