@@ -1,0 +1,95 @@
+# Provider-independent infrastructure and application services.
+# Model-provider-specific settings (API key, model name) live in an overlay
+# file — compose.anthropic.yaml today, compose.ollama.yaml / compose.bedrock.yaml
+# possible later — so switching providers never means editing this file.
+#
+# Run with:
+#   docker compose -f compose.yaml -f compose.anthropic.yaml up --build
+
+services:
+  # NOTE: everything under application/src/main/resources/db-init only runs on
+  # a *fresh* data volume — Postgres skips docker-entrypoint-initdb.d entirely
+  # once pgdata already has data. If you change the init script, run
+  # `docker compose down -v` first.
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: datamart
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./application/src/main/resources/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Exposes the data mart's list_tables / describe_table / execute_sql tools
+  # over MCP (SSE) so the agent — and any other MCP client — can reach them
+  # without knowing anything about this app's internals.
+  #
+  # Verified against a working example from java-ai-reference-arch
+  # (github.com/pramalin/java-ai-reference-arch) — this is a real, working
+  # config copied and adapted, not inferred from Docker's docs. Two things
+  # adapted from their version: --servers=database-server now points at
+  # our mcp_reader read-only role (see mcp-config.yaml) rather than a
+  # superuser, and depends_on targets our postgres healthcheck directly
+  # rather than a separate one-shot importer service (we don't have one —
+  # our data mart is seeded via docker-entrypoint-initdb.d instead).
+  mcp-gateway:
+    image: docker/mcp-gateway:latest
+    use_api_socket: true
+    command:
+      - --transport=sse
+      - --allow-unauthenticated
+      - --config=/mcp-config.yaml
+      - --servers=database-server
+      - --tools=execute_sql,list_tables,describe_table
+    volumes:
+      - ./mcp-config.yaml:/mcp-config.yaml:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --spider --quiet http://localhost:8811/sse || exit 1"
+        ]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+      start_period: 5s
+
+  application:
+    build: ./application
+    ports:
+      - "8080:8080"
+    environment:
+      - DATASOURCE_URL=jdbc:postgresql://postgres:5432/datamart
+      - MCP_GATEWAY_URL=http://mcp-gateway:8811
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "--fail",
+          "--silent",
+          "http://localhost:8080/actuator/health/readiness"
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mcp-gateway:
+        condition: service_healthy
+
+volumes:
+  pgdata:

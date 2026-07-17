@@ -1,0 +1,21 @@
+# Real OpenAI cloud API — for testing with a more capable hosted model than
+# the local options (Docker Model Runner's ai/llama3.2, or Ollama's llama3.2)
+# provide. Modeled on java-ai-reference-arch's compose.openai.yaml.
+#
+#   docker compose -f compose.yaml -f compose.openai.yaml up --build
+#
+# Needs an OpenAI API key from platform.openai.com — separate account and
+# billing from a ChatGPT Plus/Pro subscription, same distinction as
+# Anthropic API keys vs. a Claude Pro subscription (see compose.anthropic.yaml).
+#
+# No SPRING_PROFILES_ACTIVE here, unlike compose.docker-model-runner.yaml —
+# this is the *default* behavior of spring.ai.openai.* in application.yml
+# (real api.openai.com endpoint, no base-url override). The docker-model-runner
+# profile is what overrides away from this default, not the other way round.
+
+services:
+  application:
+    environment:
+      - AI_MODEL_CHAT=openai
+      - OPENAI_API_KEY=${OPENAI_API_KEY:?Set OPENAI_API_KEY in .env or your shell}
+      - OPENAI_MODEL_NAME=${OPENAI_MODEL_NAME:-gpt-4o}

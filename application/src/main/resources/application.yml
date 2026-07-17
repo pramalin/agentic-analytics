@@ -1,0 +1,101 @@
+spring:
+  application:
+    name: agentic-analytics-application
+
+  ai:
+    # Spring AI 2.0's actual multi-provider selector is this single property
+    # (not spring.ai.<provider>.chat.enabled, which I tried first and turned
+    # out not to be the real gate — see the condition evaluation report from
+    # the failed test run). AnthropicChatAutoConfiguration, OpenAiChatAutoConfiguration,
+    # and OllamaChatAutoConfiguration all key off spring.ai.model.chat with
+    # matchIfMissing=true, so leaving it unset activates ALL of them and
+    # ChatClientAutoConfiguration fails with "expected single matching bean
+    # but found N". Every profile must set this explicitly to exactly one
+    # of: anthropic | openai | ollama.
+    # Defaults to "openai" — that's the Docker Model Runner path (Model
+    # Runner speaks the OpenAI-compatible API, hence the provider name here
+    # despite not calling OpenAI's actual API), the primary "just run it,
+    # no manual model startup" local option. compose.anthropic.yaml and
+    # compose.ollama.yaml override this for their respective paths.
+    # Chat providers add their embedding-model autoconfiguration too (a
+    # separate class from the chat one), and it's NOT gated by
+    # spring.ai.model.chat — it has its own matchIfMissing=true default.
+    # Worse than the chat case: OllamaEmbeddingAutoConfiguration calls the
+    # Ollama API *at bean-creation time* to check model availability, so an
+    # unreachable localhost:11434 crashes the whole app on startup, not
+    # just fails silently — this broke every overlay that doesn't happen to
+    # run a real Ollama server at that address (which is all of them except
+    # compose.ollama.yaml). We don't need embeddings until Step 6 (RAG), so
+    # disable the whole embedding-model layer for now rather than gate it
+    # per-provider like chat.
+    model:
+      chat: ${AI_MODEL_CHAT:openai}
+      embedding: none
+
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:}
+      chat:
+        options:
+          model: ${ANTHROPIC_MODEL_NAME:claude-sonnet-5}
+
+    # Real OpenAI cloud API is the default for spring.ai.model.chat=openai —
+    # no base-url override, so Spring AI's own default (api.openai.com)
+    # applies, and a real key is required (no fallback, fails fast if
+    # missing — same as anthropic above). The docker-model-runner Spring
+    # profile (application-docker-model-runner.yml, activated by
+    # compose.docker-model-runner.yaml) overrides all three of these to
+    # point at the local runner instead, since DMR needs a different
+    # base-url, doesn't care about the api-key value, and uses OCI-style
+    # model names (ai/llama3.2) rather than OpenAI's (gpt-4o).
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: ${OPENAI_MODEL_NAME:gpt-4o}
+
+    # Fallback path if Docker Model Runner isn't available on your platform
+    # (it needs Docker Desktop, or a recent Docker Engine with Model Runner
+    # support — not guaranteed on every Linux setup). Runs a plain
+    # ollama/ollama container instead — see compose.ollama.yaml.
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      chat:
+        options:
+          model: ${OLLAMA_MODEL_NAME:llama3.2}
+      init:
+        # Spring AI pulls the model itself on startup if it's not already
+        # present in the Ollama container — no separate `ollama pull` step.
+        # First run will be slow (multi-GB download); subsequent runs are
+        # instant since the model is cached in the ollama-models volume.
+        pull-model-strategy: when_missing
+
+    mcp:
+      client:
+        enabled: true
+        name: agentic-analytics-client
+        version: 1.0.0
+        request-timeout: 30s
+        type: SYNC
+        sse:
+          connections:
+            postgres:
+              url: ${MCP_GATEWAY_URL:http://localhost:8811}
+
+  datasource:
+    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/datamart}
+    username: ${DATASOURCE_USERNAME:postgres}
+    password: ${DATASOURCE_PASSWORD:postgres}
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when-authorized

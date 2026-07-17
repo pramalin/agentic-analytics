@@ -1,0 +1,9 @@
+# Verified against a working example from java-ai-reference-arch
+# (github.com/pramalin/java-ai-reference-arch) — this schema (a single
+# database_url key, SQLAlchemy/asyncpg-style DSN, under a key matching
+# --servers=database-server) is a real, working config, not inferred from
+# docs. Adapted here to connect as mcp_reader (read-only role — see
+# db-init/01_init_datamart.sql) rather than a superuser, and to our db name.
+database-server:
+  database_url: postgresql+asyncpg://mcp_reader:mcp_reader_password@postgres:5432/datamart
+

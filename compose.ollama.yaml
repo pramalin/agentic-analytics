@@ -1,0 +1,51 @@
+# Local-only configuration, layered on top of compose.yaml — no API key,
+# no cloud cost, no external network dependency once the model is pulled.
+#
+#   docker compose -f compose.yaml -f compose.ollama.yaml up --build
+#
+# First run pulls the model (multi-GB download, several minutes depending
+# on connection speed) — Spring AI does this automatically at application
+# startup (spring.ai.ollama.init.pull-model-strategy: when_missing in
+# application.yml), not via a separate init container. Subsequent runs are
+# fast since the model is cached in the ollama-models volume.
+#
+# Model choice: llama3.2 (the default, ~2GB) supports tool calling, which
+# this project depends on (the agent has to call list_tables/describe_table/
+# execute_sql). Not every small local model does — if you swap in a smaller
+# model via OLLAMA_MODEL_NAME to save disk/RAM, check it supports tools
+# before assuming the agent will work with it.
+
+services:
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    # CPU-only by default — works anywhere, just slower. If you have an
+    # NVIDIA GPU and the container toolkit installed, uncomment:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  application:
+    environment:
+      - AI_MODEL_CHAT=ollama
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL_NAME=${OLLAMA_MODEL_NAME:-llama3.2}
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+volumes:
+  ollama-models:

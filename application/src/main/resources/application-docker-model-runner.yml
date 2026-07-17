@@ -1,0 +1,20 @@
+# Activated via SPRING_PROFILES_ACTIVE=docker-model-runner (set by
+# compose.docker-model-runner.yaml). Overrides the base application.yml's
+# openai.* block, which otherwise targets real cloud OpenAI — see the
+# comment there for why these can't just live together as one set of
+# defaults (different base-url, api-key doesn't matter here, different
+# model-name convention).
+spring:
+  ai:
+    openai:
+      # LLM_URL / LLM_MODEL are injected directly into the container's
+      # environment by Compose's native `models:` element — not something
+      # set in this repo's own environment: blocks. The localhost:12434
+      # fallback only matters if you run the app outside Compose against a
+      # Model Runner already enabled on your host
+      # (`docker desktop enable model-runner`).
+      base-url: ${LLM_URL:http://localhost:12434/engines}
+      api-key: ${OPENAI_API_KEY:dummy-key}
+      chat:
+        options:
+          model: ${LLM_MODEL:ai/llama3.2}

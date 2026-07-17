@@ -1,0 +1,47 @@
+# Local-only configuration using Docker Model Runner — no API key, no cloud
+# cost, and (this is the point) the model starts automatically as part of
+# `docker compose up`. No separate `docker model run` command in another
+# terminal, unlike a manually-started Ollama session.
+#
+#   docker compose -f compose.yaml -f compose.docker-model-runner.yaml up --build
+#
+# Requires Docker Model Runner support on your machine — Docker Desktop, or
+# a recent Docker Engine with Model Runner enabled. Check first:
+#   docker model version
+# If that command isn't recognized, Model Runner isn't available on this
+# install — use compose.ollama.yaml instead (plain ollama/ollama container,
+# same idea, no Compose-native model management).
+#
+# Verified working (docker compose up came up healthy, tool calls executed
+# successfully end to end) — the earlier caveat here about not being able to
+# test this myself is resolved. Remaining open question is model capability,
+# not plumbing — see the "Model choice" note below and README's Step 5g.
+#
+# Troubleshooting, if it doesn't come up cleanly on your machine:
+#   docker compose -f compose.yaml -f compose.docker-model-runner.yaml \
+#     exec application env | grep LLM_
+# and compare what's actually injected against what
+# application-docker-model-runner.yml expects (spring.ai.openai.base-url
+# reads ${LLM_URL}, .chat.options.model reads ${LLM_MODEL}).
+#
+# Model choice: ai/llama3.2 supports tool calling via Model Runner's
+# llama.cpp backend, which this project depends on (list_tables/
+# describe_table/execute_sql) — same caveat as the plain-Ollama overlay:
+# not every model handles tool calling reliably, small/quantized ones
+# especially. If the agent answers without querying anything, suspect the
+# model before the code.
+
+services:
+  application:
+    environment:
+      - AI_MODEL_CHAT=openai
+      - SPRING_PROFILES_ACTIVE=docker-model-runner
+    models:
+      llm:
+        endpoint_var: LLM_URL
+        model_var: LLM_MODEL
+
+models:
+  llm:
+    model: ai/llama3.2
+    context_size: 4096

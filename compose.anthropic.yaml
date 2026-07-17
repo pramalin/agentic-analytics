@@ -1,0 +1,13 @@
+# Anthropic-specific configuration, layered on top of compose.yaml:
+#   docker compose -f compose.yaml -f compose.anthropic.yaml up --build
+#
+# A future compose.bedrock.yaml or compose.ollama.yaml would set the
+# equivalent provider-specific env vars here instead, without touching
+# compose.yaml or mcp-config.yaml.
+
+services:
+  application:
+    environment:
+      - AI_MODEL_CHAT=anthropic
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY in .env or your shell}
+      - ANTHROPIC_MODEL_NAME=${ANTHROPIC_MODEL_NAME:-claude-sonnet-5}
