@@ -90,6 +90,18 @@ services:
         condition: service_healthy
       mcp-gateway:
         condition: service_healthy
-
+  
+  # End-user chat UI — talks to `application` directly from the browser
+  # (see QuestionController's @CrossOrigin), not through this container's
+  # network at all. depends_on here is about start order for a clean
+  # `docker compose up`, not a runtime dependency the browser cares about.
+  frontend-react:
+    build: ./frontend-react
+    ports:
+      - "3000:3000"
+    depends_on:
+      application:
+        condition: service_healthy
+        
 volumes:
   pgdata:
