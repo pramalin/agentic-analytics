@@ -1,3 +1,5 @@
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useState, useRef, useEffect, type FormEvent } from "react";
 import { askQuestion, ApiError } from "./api";
 import "./App.css";
@@ -118,7 +120,9 @@ export default function App() {
 
               {turn.status === "done" && (
                 <div className="entry-answer">
-                  <p>{turn.answer}</p>
+                  <div className="markdown-answer">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{turn.answer}</ReactMarkdown>
+                  </div>
                   <span className="stamp">
                     Q{index + 1} &middot; verified &middot;{" "}
                     {turn.latencyMs ? `${(turn.latencyMs / 1000).toFixed(1)}s` : ""}

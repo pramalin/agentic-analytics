@@ -781,3 +781,118 @@ button {
     padding: 10px 14px;
   }
 }
+
+
+/* -------------------------------------------------------------------------- */
+/* Markdown answers                                                            */
+/* -------------------------------------------------------------------------- */
+
+.markdown-answer {
+  text-align: left;
+}
+
+.markdown-answer ul,
+.markdown-answer ol {
+  max-width: 650px;
+  margin: 0 0 16px;
+  padding-left: 22px;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.72;
+}
+
+.markdown-answer li {
+  margin-bottom: 4px;
+}
+
+.markdown-answer a {
+  color: var(--accent);
+  font-weight: 550;
+  text-decoration: underline;
+  text-decoration-color: var(--accent-border);
+  text-underline-offset: 2px;
+}
+
+.markdown-answer a:hover {
+  color: var(--accent-hover);
+}
+
+.markdown-answer strong {
+  color: var(--ink-strong);
+  font-weight: 650;
+}
+
+.markdown-answer blockquote {
+  margin: 0 0 16px;
+  padding: 4px 16px;
+  border-left: 3px solid var(--accent-border);
+  color: var(--ink-muted);
+}
+
+/* Inline code, e.g. `column_name` */
+.markdown-answer :not(pre) > code {
+  padding: 2px 6px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--accent-strong);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+/* Fenced code blocks, e.g. SQL/JSON */
+.markdown-answer pre {
+  max-width: 650px;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  background: var(--ink-strong);
+  border-radius: 10px;
+}
+
+.markdown-answer pre code {
+  padding: 0;
+  background: none;
+  border: none;
+  color: #e6edf3;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+/* Tables */
+.markdown-answer table {
+  width: 100%;
+  max-width: 650px;
+  margin: 0 0 16px;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.markdown-answer th,
+.markdown-answer td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.markdown-answer th {
+  background: var(--surface-soft);
+  color: var(--ink-strong);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.markdown-answer tr:last-child td {
+  border-bottom: none;
+}
+
+.markdown-answer tr:nth-child(even) td {
+  background: rgba(246, 248, 251, 0.5);
+}
