@@ -27,6 +27,8 @@ fully local options), and a Docker Compose setup for local dev.
   the actual tool calls (name, arguments, result, timing) behind each
   answer, not just the final text — built for developers, not end users
 
+![Screenshot of the engineering console showing an expanded execute_sql trace with the real generated SQL and its result](docs/images/console-screenshot.png)
+
 This was built step by step with a documented debugging trail — real bugs
 found through testing, not just a demo that happens to work once. The full
 history, including the things that didn't work the first time, is in
@@ -175,7 +177,9 @@ agentic-analytics/
 │   ├── development-log.md
 │   ├── mcp-gateway.md
 │   ├── rag.md
-│   └── images/screenshot.png
+│   └── images/
+│       ├── screenshot.png
+│       └── console-screenshot.png
 ├── talk/                      # JaxJUG talk slides + LinkedIn post drafts
 ├── frontend-react/
 │   ├── Dockerfile
