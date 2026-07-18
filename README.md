@@ -23,6 +23,9 @@ fully local options), and a Docker Compose setup for local dev.
   [`docs/rag.md`](docs/rag.md) for the full story
 - **Frontend** — React + TypeScript, markdown-rendered answers (real tables,
   not text blobs)
+- **Engineering console** — Angular, at port 4200: the same agent, but shows
+  the actual tool calls (name, arguments, result, timing) behind each
+  answer, not just the final text — built for developers, not end users
 
 This was built step by step with a documented debugging trail — real bugs
 found through testing, not just a demo that happens to work once. The full
@@ -102,7 +105,9 @@ curl -X POST localhost:8080/api/questions \
   -d '{"question": "What were declined transactions by region last quarter?"}'
 ```
 
-Or use the actual UI: **http://localhost:3000**.
+Or use the actual UI: **http://localhost:3000**. For the engineering
+console (shows real tool calls, arguments, results, and timing behind each
+answer — built for developers, not end users): **http://localhost:4200**.
 
 If the agent responds but says it has no tools available, the MCP gateway
 likely isn't wired up correctly on your machine yet — see
@@ -128,6 +133,15 @@ npm install
 npm run dev   # http://localhost:3000
 ```
 
+Engineering console only, with hot reload (needs the backend running
+separately; if the Docker-served version is already up, `docker compose
+stop frontend-angular` first to free port 4200):
+```bash
+cd frontend-angular
+npm install
+ng serve   # http://localhost:4200
+```
+
 Run the tests (Docker must be running — several test classes spin up their
 own Postgres container via Testcontainers; no real API key or MCP gateway
 needed, all disabled/placeholder'd for the full-context tests):
@@ -149,7 +163,7 @@ cd application && mvn test
 
 ```
 agentic-analytics/
-├── compose.yaml               # base: postgres, mcp-gateway, application, frontend-react
+├── compose.yaml               # base: postgres, mcp-gateway, application, frontend-react, frontend-angular
 ├── compose.anthropic.yaml     # provider overlay: Anthropic API key/model
 ├── compose.docker-model-runner.yaml  # provider overlay: local, auto-started model
 ├── compose.ollama.yaml        # provider overlay: local Ollama fallback, no API key
@@ -160,7 +174,8 @@ agentic-analytics/
 ├── docs/
 │   ├── development-log.md
 │   ├── mcp-gateway.md
-│   └── rag.md
+│   ├── rag.md
+│   └── images/screenshot.png
 ├── talk/                      # JaxJUG talk slides + LinkedIn post drafts
 ├── frontend-react/
 │   ├── Dockerfile
@@ -171,6 +186,19 @@ agentic-analytics/
 │       ├── App.tsx
 │       ├── App.css
 │       └── api.ts
+├── frontend-angular/           # engineering console (Step 9) — developers only
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   ├── package.json
+│   └── src/
+│       ├── styles.css          # global styles — CSS custom properties MUST
+│       │                       # live here, not in app.css (see Step 9's
+│       │                       # entry in development-log.md for why)
+│       └── app/
+│           ├── app.ts
+│           ├── app.html
+│           ├── app.css
+│           └── question.service.ts
 └── application/
     ├── Dockerfile
     ├── pom.xml
@@ -181,7 +209,11 @@ agentic-analytics/
         │   │   ├── ApplicationInfoController.java
         │   │   └── QuestionController.java
         │   ├── config/ChatClientConfig.java
-        │   └── rag/SchemaDocIngestor.java
+        │   ├── rag/SchemaDocIngestor.java
+        │   └── tracing/                # tool-call trace capture (Step 8)
+        │       ├── ToolCallTrace.java
+        │       ├── ToolCallTraceCollector.java
+        │       └── TracingToolCallback.java
         ├── main/resources/
         │   ├── application.yml
         │   ├── application-docker-model-runner.yml

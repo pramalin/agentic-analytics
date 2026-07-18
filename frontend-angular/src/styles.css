@@ -1,1 +1,28 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --bg: #12161d;
+  --surface: #1a1f29;
+  --surface-hover: #212836;
+  --border: #2a3140;
+  --text: #d8dee9;
+  --text-dim: #7d8899;
+  --accent: #e0a458;
+  --accent-dim: #a97b3f;
+  --danger: #e0685c;
+  --danger-soft: #2b1b1a;
+
+  --font-body: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "IBM Plex Mono", "SF Mono", Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+}

@@ -286,12 +286,72 @@ decisions were made.
     read-only enterprise data mart" (drops "verified" entirely). Read-only
     is genuinely enforced (the `mcp_reader` DB role, Step 5b) and defensible
     as stated; "verified" wasn't, and got removed rather than softened.
-
-## Coming up (not yet done)
-
-- **Step 8** — Backend: capture tool-call traces (tool name, arguments,
-  result) during a request and expose them via a new endpoint, ahead of the
-  Angular admin console that needs this data.
-- **Step 9** — Angular admin/debug console, built on Step 8's trace data —
-  matches `java-ai-reference-arch`'s "engineering console" concept
-  (generated SQL, tool calls, raw results — not just a chatbot).
+- [x] **Step 8** — Backend: capture tool-call traces during a request.
+  - `TracingToolCallback` wraps each real `ToolCallback` sourced from the
+    MCP client — every call delegated unchanged, only observed. Recorded
+    via `ToolCallTraceCollector`, a `ThreadLocal`-based collector rather
+    than Spring's `@RequestScope`: the MCP client is configured `SYNC`, so
+    tool invocation blocks the calling thread rather than handing off to a
+    reactor thread, meaning a plain ThreadLocal set on the controller's
+    thread is reliably visible where it needs to be.
+  - `POST /api/questions` now returns `traces: [{toolName, arguments,
+    result, durationMs}]` alongside the answer — additive, no breaking
+    change for the React frontend.
+  - Verifying this surfaced a real, unrelated bug: `AgenticAnalyticsApplicationTests`
+    started failing with a genuine `401` from OpenAI's embeddings API.
+    Root cause: `SchemaDocIngestor` runs unconditionally on every startup
+    (including in tests) and, since embeddings moved from local ONNX to a
+    real OpenAI call, made a real billed API call for a feature nothing
+    reads from (RAG's advisor is disabled — see `docs/rag.md`). Fixed by
+    gating `SchemaDocIngestor` behind `app.rag.enabled` (default `false`),
+    and made `SchemaDocIngestorIT` skip itself gracefully
+    (`@EnabledIfEnvironmentVariable`) rather than fail when no real
+    `OPENAI_API_KEY` is present — that test does a genuine embed-and-retrieve,
+    so a placeholder key can't produce a meaningful result the way it does
+    for the other context-load tests.
+- [x] **Step 9** — Angular engineering console, built on Step 8's trace data.
+  - Scaffolded fresh with `ng new` (Angular 22 — standalone components,
+    signals, no `NgModule` at all) rather than hand-written, same discipline
+    as the React frontend's Vite scaffold.
+  - Deliberately different visual identity from the React app — a dark,
+    developer-tool aesthetic (closer to browser DevTools/a distributed
+    tracing UI) rather than reusing the end-user palette, since this is an
+    internal tool for developers, not a customer-facing one. Reuses IBM
+    Plex Mono from the React app as a small deliberate thread tying the two
+    together; otherwise its own identity (muted amber accent vs. React's teal).
+  - Each tool call renders as a row with a duration bar sized relative to
+    the slowest call in that response, expandable to show pretty-printed
+    arguments and the actual extracted result text (this MCP server's tool
+    results come back as a JSON-encoded array of `{text: "..."}` objects —
+    that's this specific server's own convention, not an MCP or Spring AI
+    requirement, extracted rather than shown as escaped JSON).
+  - *Bug hit and fixed:* the first version put CSS custom properties
+    (`--bg`, `--accent`, etc.) inside `app.css`'s own `:root`/`html`/`body`
+    rules — silently inert, since Angular's component style encapsulation
+    scopes a component's stylesheet to that component's own rendered
+    elements, and `:root`/`html`/`body` exist outside any component's
+    template. Every `var(--accent)` reference then resolved to nothing —
+    structure and layout rendered correctly, but with zero color. Fixed by
+    moving the custom-property definitions to `src/styles.css` (Angular's
+    genuinely global stylesheet), leaving the rest of `app.css` untouched.
+  - **A live demonstration of the Step 5j discipline working correctly,**
+    found by actually using the console rather than asserting it: expanding
+    an `execute_sql` trace shows the real `SELECT DISTINCT status` query
+    and its real uppercase result values (`DECLINED`, `REVERSED`,
+    `APPROVED`) — the exact defense against the Step 5i/5j casing bug,
+    visible in the trace, not just asserted in a system prompt.
+  - **A side finding from the trace data itself:** every tool call in a
+    given request takes roughly the same time (~3.7–4.7s), regardless of
+    how much actual work it does — `list_tables` (trivial) versus a real
+    `execute_sql` query both land in the same range. That's the signature
+    of fixed per-call overhead dominating the timing, not the work itself;
+    correlating this with the MCP gateway's own logs (`Running
+    souhardyak/mcp-db-server with [run --rm -i ...]`, seen since Step 5e)
+    points at the third-party tool server spinning up a brand-new
+    container for every single tool call. Not something the trace UI
+    proves on its own — an inference from combining two data sources —
+    but a genuinely interesting thing the tracing work surfaced that
+    wasn't visible before it existed.
+  - `compose.yaml` gained a `frontend-angular` service (port 4200),
+    same multi-stage Dockerfile pattern (Node build → nginx serve) as
+    `frontend-react`.

@@ -1,19 +1,73 @@
-<div style="padding: 40px; font-family: sans-serif;">
-  <h1>Engineering Console — connectivity check</h1>
+<div class="console">
+  <header class="masthead">
+    <p class="eyebrow">Engineering Console</p>
+    <h1>Agent Trace Viewer</h1>
+    <p class="subhead">
+      Ask a question and see exactly which tools the agent called, with what
+      arguments, what came back, and how long each call took.
+    </p>
+  </header>
 
-  <input #questionInput type="text" style="width: 500px;"
-         value="How many total transactions are declined, across all time?" />
-  <button (click)="ask(questionInput.value)" style="margin-left: 10px;">Ask</button>
+  <div class="composer">
+    <input
+      #questionInput
+      type="text"
+      [value]="question()"
+      (keyup.enter)="ask(questionInput.value)"
+      placeholder="Ask a question about the data mart…"
+    />
+    <button (click)="ask(questionInput.value)" [disabled]="loading()">
+      {{ loading() ? 'Running…' : 'Ask' }}
+    </button>
+  </div>
 
   @if (error()) {
-    <p style="color: red;">Error: {{ error() }}</p>
+    <div class="error-panel">
+      <strong>Request failed</strong>
+      <pre>{{ error() }}</pre>
+    </div>
   }
 
-  @if (result()) {
-    <h3>Answer</h3>
-    <p>{{ result()!.answer }}</p>
+  @if (answer()) {
+    <section class="answer-panel">
+      <p class="section-label">Answer</p>
+      <p class="answer-text">{{ answer() }}</p>
+    </section>
+  }
 
-    <h3>Traces ({{ result()!.traces.length }})</h3>
-    <pre>{{ result()!.traces | json }}</pre>
+  @if (traces().length > 0) {
+    <section class="trace-panel">
+      <p class="section-label">Tool calls ({{ traces().length }})</p>
+
+      @for (trace of traces(); track $index) {
+        <div
+          class="trace-row"
+          [class.expanded]="trace.expanded"
+          (click)="toggleExpanded($index)"
+        >
+          <div class="trace-summary">
+            <span class="trace-index">{{ $index + 1 }}</span>
+            <span class="trace-tool-name">{{ trace.toolName }}</span>
+            <div class="trace-bar-track">
+              <div class="trace-bar" [style.width.%]="trace.widthPercent"></div>
+            </div>
+            <span class="trace-duration">{{ trace.durationMs }}ms</span>
+          </div>
+
+          @if (trace.expanded) {
+            <div class="trace-detail" (click)="$event.stopPropagation()">
+              <div class="trace-detail-block">
+                <p class="detail-label">Arguments</p>
+                <pre>{{ trace.formattedArguments }}</pre>
+              </div>
+              <div class="trace-detail-block">
+                <p class="detail-label">Result</p>
+                <pre>{{ trace.formattedResult }}</pre>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
   }
 </div>
