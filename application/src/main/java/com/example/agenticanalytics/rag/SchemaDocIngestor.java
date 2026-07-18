@@ -6,6 +6,7 @@ import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
@@ -23,8 +24,19 @@ import java.util.List;
  * Re-ingests on every startup rather than checking a content hash first —
  * fine for a handful of small local docs with a free local embedding
  * model; would need hash-checking before this scaled to a real deployment.
+ *
+ * Gated behind app.rag.enabled (default false): the RetrievalAugmentationAdvisor
+ * this feeds is currently disabled in ChatClientConfig (see docs/rag.md —
+ * it broke multi-turn tool-calling), so nothing has read these embeddings
+ * since then. Running this unconditionally anyway would mean real,
+ * unnecessary OpenAI embedding API calls on every single startup — cost
+ * for a feature nothing uses — and, as found via a real test failure
+ * (401 from a placeholder key in a context-load test), makes this class
+ * an unexpected active network caller in any test that boots the full
+ * context. Set app.rag.enabled=true once RAG is actually re-enabled.
  */
 @Component
+@ConditionalOnProperty(name = "app.rag.enabled", havingValue = "true")
 public class SchemaDocIngestor implements ApplicationRunner {
 
     private final VectorStore vectorStore;

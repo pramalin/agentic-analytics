@@ -14,6 +14,8 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import com.example.agenticanalytics.tracing.ToolCallTraceCollector;
+import com.example.agenticanalytics.tracing.TracingToolCallback;
 
 @Configuration
 public class ChatClientConfig {
@@ -111,9 +113,11 @@ public class ChatClientConfig {
     public ChatClient chatClient(ChatClient.Builder builder,
                                   ChatMemory chatMemory,
                                   VectorStore vectorStore,
-                                  ObjectProvider<ToolCallbackProvider> mcpTools) {
+                                  ObjectProvider<ToolCallbackProvider> mcpTools,
+                                  ToolCallTraceCollector traceCollector) {    
         ToolCallback[] toolCallbacks = mcpTools.stream()
                 .flatMap(provider -> Arrays.stream(provider.getToolCallbacks()))
+                .map(callback -> (ToolCallback) new TracingToolCallback(callback, traceCollector))
                 .toArray(ToolCallback[]::new);
 
         var documentRetriever = VectorStoreDocumentRetriever.builder()

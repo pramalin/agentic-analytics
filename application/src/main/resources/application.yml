@@ -20,14 +20,12 @@ spring:
     # Chat providers add their embedding-model autoconfiguration too (a
     # separate class from the chat one), and it's NOT gated by
     # spring.ai.model.chat — it has its own matchIfMissing=true default.
-    # Worse than the chat case: OllamaEmbeddingAutoConfiguration calls the
-    # Ollama API *at bean-creation time* to check model availability, so an
-    # unreachable localhost:11434 crashed the whole app on startup when this
-    # was left unset (Step 5f). Now set to "transformers" (Step 6) — the
-    # local ONNX embedding model, deliberately independent of whichever
-    # chat provider is active, so RAG works identically on all three paths
-    # and never depends on a chat provider's embedding API (extra cost,
-    # extra failure mode) at all.
+    # Originally set to "transformers" (local ONNX, Step 6) — hit a real,
+    # previously-reported upstream bug (spring-projects/spring-ai#1391):
+    # the default model-fetch URL serves a broken Git-LFS pointer instead
+    # of the real ~90MB file. Switched to "openai" (text-embedding-3-small)
+    # instead — reliable, but couples this to the OpenAI overlay
+    # specifically. See docs/rag.md.
     model:
       chat: ${AI_MODEL_CHAT:openai}
       embedding: openai
@@ -52,9 +50,9 @@ spring:
       chat:
         options:
           model: ${OPENAI_MODEL_NAME:gpt-4o}
-          embedding:
-            options:
-              model: text-embedding-3-small
+      embedding:
+        options:
+          model: text-embedding-3-small
 
     # Fallback path if Docker Model Runner isn't available on your platform
     # (it needs Docker Desktop, or a recent Docker Engine with Model Runner
@@ -86,13 +84,26 @@ spring:
 
     vectorstore:
       pgvector:
-        dimensions: 1536   # was 384 (all-MiniLM-L6-v2) — text-embedding-3-small's native size
+        # Matches text-embedding-3-small's native output size. If this ever
+        # gets out of sync with the actual embedding model's output size,
+        # PgVectorStore fails loudly at startup rather than silently
+        # corrupting data — a mismatch here is easy to catch.
+        dimensions: 1536
         initialize-schema: true
 
   datasource:
     url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/datamart}
     username: ${DATASOURCE_USERNAME:postgres}
     password: ${DATASOURCE_PASSWORD:postgres}
+
+# Off by default — matches RAG's actual disabled status (see docs/rag.md:
+# the RetrievalAugmentationAdvisor broke multi-turn tool-calling). Gates
+# SchemaDocIngestor so it doesn't make real OpenAI embedding API calls
+# on every startup for a feature nothing currently reads from. Set to
+# true once RAG is re-enabled in ChatClientConfig.
+app:
+  rag:
+    enabled: false
 
 server:
   port: 8080
@@ -107,7 +118,3 @@ management:
       probes:
         enabled: true
       show-details: when-authorized
-
-logging:
-  level:
-    org.springframework.ai: DEBUG

@@ -1,9 +1,11 @@
 package com.example.agenticanalytics.web;
 
+import com.example.agenticanalytics.tracing.ToolCallTraceCollector;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,8 +25,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * ChatClient instead. See ChatControllerTest's earlier version of this
  * comment (now QuestionControllerTest) for why the fluent chain is stubbed
  * by hand rather than with a deep-stub mock.
+ *
+ * @Import(ToolCallTraceCollector.class) — @WebMvcTest slices don't
+ * auto-include plain @Component beans, only controller-layer config.
+ * ToolCallTraceCollector has no dependencies of its own and does nothing
+ * but manipulate an in-memory ThreadLocal, so using the real class here is
+ * simpler and more honest than mocking it.
  */
 @WebMvcTest(QuestionController.class)
+@Import(ToolCallTraceCollector.class)
 class QuestionControllerTest {
 
     @Autowired
@@ -52,7 +61,14 @@ class QuestionControllerTest {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.question").value("How many employees are in the system?"))
-                .andExpect(jsonPath("$.answer").value("There are 8 employees in the system."));
+                .andExpect(jsonPath("$.answer").value("There are 8 employees in the system."))
+                // No real tools are wired in this slice (ChatClient itself is
+                // mocked, so nothing ever calls a TracingToolCallback) — the
+                // field should still serialize as an empty array, not null
+                // or a missing field, so the console can always rely on it
+                // being present.
+                .andExpect(jsonPath("$.traces").isArray())
+                .andExpect(jsonPath("$.traces").isEmpty());
     }
 
     @Test

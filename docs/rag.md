@@ -116,10 +116,27 @@ not a confirmed mechanism.
   system-prompt instruction, which is known to be unreliable under
   GPT-4o's non-zero temperature (see Step 5j's own history for a
   reproduction of that unreliability).
+- **A second, independent reason this isn't ready to casually re-enable,**
+  found while wiring up Step 8's tool-call tracing: `SchemaDocIngestor`
+  ran unconditionally on every startup — including in `mvn test`'s
+  full-context tests — even though nothing has read its embeddings since
+  the advisor was disabled. Once the embedding model moved from local
+  ONNX to a real OpenAI API call (see the note above on spring-ai#1391),
+  this meant every startup made a real, billed OpenAI embedding call for
+  a feature nothing uses, and a placeholder test key surfaced as a real
+  `401 Unauthorized` failing `AgenticAnalyticsApplicationTests`. Fixed by
+  gating `SchemaDocIngestor` behind `app.rag.enabled` (default `false`,
+  matching RAG's actual disabled status) — re-enabling RAG now means
+  flipping that property too, not just uncommenting the advisor.
 - `SchemaDocIngestor` and the vector store still work correctly and are
   still tested (`SchemaDocIngestorIT`) — the ingestion and retrieval
   machinery itself isn't broken, only using it live in the chat advisor
-  chain is.
+  chain is. That test now requires a real `OPENAI_API_KEY` to mean
+  anything (a placeholder key can't produce a meaningful embedding, only
+  a 401), so it's gated with `@EnabledIfEnvironmentVariable` — it skips
+  itself gracefully rather than failing when no real key is present,
+  keeping this project's "tests never need a real key" convention intact
+  everywhere else.
 - Real next steps, not done yet:
   1. Scope RAG retrieval to only the first turn of a conversation (e.g.
      conditionally skip the advisor once memory already has prior turns),
