@@ -92,7 +92,7 @@ export default function App() {
 
           <p className="subhead">
             Ask business questions in plain English and receive answers grounded in
-            verified, read-only enterprise data.
+            a read-only enterprise data mart.
           </p>
         </header>
 
@@ -125,7 +125,7 @@ export default function App() {
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{turn.answer}</ReactMarkdown>
                   </div>
                   <span className="stamp">
-                    Q{index + 1} &middot; verified &middot;{" "}
+                    Q{index + 1} &middot; data queried &middot;{" "}
                     {turn.latencyMs ? `${(turn.latencyMs / 1000).toFixed(1)}s` : ""}
                   </span>
                 </div>

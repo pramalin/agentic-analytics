@@ -520,3 +520,8 @@ WARNING: Unmatched cancel notification for request id 228
 2026.07.18 03:35:05 INFO  no build target found for /home/pramalin/work/agentic-analytics/application/src/main/java/com/example/agenticanalytics/config/ChatClientConfig.java. Using fallback presentation compiler.
 2026.07.18 03:35:05 INFO  no build target found for /home/pramalin/work/agentic-analytics/application/src/main/java/com/example/agenticanalytics/config/ChatClientConfig.java. Using fallback presentation compiler.
 2026.07.18 03:35:07 INFO  no build target found for /home/pramalin/work/agentic-analytics/application/src/main/java/com/example/agenticanalytics/config/ChatClientConfig.java. Using fallback presentation compiler.
+2026.07.18 05:07:13 INFO  no build target found for /home/pramalin/work/agentic-analytics/application/src/main/java/com/example/agenticanalytics/config/ChatClientConfig.java. Using fallback presentation compiler.
+2026.07.18 05:07:15 INFO  no build target found for /home/pramalin/work/agentic-analytics/application/src/main/java/com/example/agenticanalytics/config/ChatClientConfig.java. Using fallback presentation compiler.
+2026.07.18 05:43:02 INFO  no build target found for /home/pramalin/work/agentic-analytics/application/src/main/java/com/example/agenticanalytics/config/ChatClientConfig.java. Using fallback presentation compiler.
+2026.07.18 05:43:02 INFO  no build target found for /home/pramalin/work/agentic-analytics/application/src/test/java/com/example/agenticanalytics/AgenticAnalyticsApplicationTests.java. Using fallback presentation compiler.
+2026.07.18 05:43:02 INFO  no build target found for /home/pramalin/work/agentic-analytics/application/src/test/java/com/example/agenticanalytics/rag/SchemaDocIngestorIT.java. Using fallback presentation compiler.
