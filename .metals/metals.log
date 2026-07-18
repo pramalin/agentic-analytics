@@ -700,3 +700,5 @@ WARNING: Unmatched cancel notification for request id 1133
 2026.07.18 09:15:57 WARN  no build target for: /home/pramalin/work/agentic-analytics/application/src/main/java/com/example/agenticanalytics/config/ChatClientConfig.java
 2026.07.18 09:15:57 INFO  no build target found for /home/pramalin/work/agentic-analytics/application/src/main/java/com/example/agenticanalytics/config/ChatClientConfig.java. Using fallback presentation compiler.
 2026.07.18 09:16:56 INFO  no build target found for /home/pramalin/work/agentic-analytics/application/src/main/java/com/example/agenticanalytics/config/ChatClientConfig.java. Using fallback presentation compiler.
+2026.07.18 10:39:52 INFO  no build target found for /home/pramalin/work/agentic-analytics/application/src/main/java/com/example/agenticanalytics/config/ChatClientConfig.java. Using fallback presentation compiler.
+2026.07.18 10:40:07 INFO  no build target found for /home/pramalin/work/agentic-analytics/application/src/main/java/com/example/agenticanalytics/config/ChatClientConfig.java. Using fallback presentation compiler.
