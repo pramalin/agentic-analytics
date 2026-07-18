@@ -49,6 +49,7 @@ import org.testcontainers.utility.DockerImageName;
 @SpringBootTest(properties = {
         "spring.ai.model.chat=anthropic",
         "spring.ai.anthropic.api-key=test-placeholder-key",
+        "spring.ai.openai.api-key=test-placeholder-key",
         "spring.ai.mcp.client.enabled=false"
 })
 class AgenticAnalyticsApplicationTests {

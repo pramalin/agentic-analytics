@@ -68,14 +68,6 @@
       <groupId>org.springframework.ai</groupId>
       <artifactId>spring-ai-rag</artifactId>
     </dependency>
-    <!-- Local ONNX embedding model (all-MiniLM-L6-v2, bundled in the jar —
-         no download, no API key/cost). Deliberately decoupled from
-         whichever chat provider is selected (spring.ai.model.chat) so RAG
-         works identically regardless of Anthropic/OpenAI/Ollama. -->
-    <dependency>
-      <groupId>org.springframework.ai</groupId>
-      <artifactId>spring-ai-starter-model-transformers</artifactId>
-    </dependency>
 
     <!-- Actuator: /actuator/health, /actuator/health/readiness — replaces
          the earlier custom HealthController to match the reference repo's

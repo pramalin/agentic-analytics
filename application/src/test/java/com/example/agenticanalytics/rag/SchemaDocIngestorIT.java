@@ -1,5 +1,8 @@
 package com.example.agenticanalytics.rag;
 
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
@@ -12,10 +15,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
  * Confirms SchemaDocIngestor actually runs on startup and that the
  * resulting embeddings are retrievable — not just that the app doesn't
@@ -27,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(properties = {
         "spring.ai.model.chat=anthropic",
         "spring.ai.anthropic.api-key=test-placeholder-key",
+        "spring.ai.openai.api-key=test-placeholder-key",
         "spring.ai.mcp.client.enabled=false"
 })
 class SchemaDocIngestorIT {

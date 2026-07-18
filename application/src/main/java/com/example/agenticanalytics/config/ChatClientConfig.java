@@ -1,5 +1,7 @@
 package com.example.agenticanalytics.config;
 
+import java.util.Arrays;
+
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -12,8 +14,6 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.Arrays;
 
 @Configuration
 public class ChatClientConfig {
@@ -31,8 +31,17 @@ public class ChatClientConfig {
             than re-deriving it yourself.
 
             Rules you must follow, in order, every single time, with no exceptions:
+            0. Every new question requires its own fresh execute_sql call, even if a
+               previous question in this same conversation covered similar or related
+               ground. Never answer from a prior turn's results, and never respond
+               "I don't know" without having attempted at least one execute_sql call
+               for the current question first. Skipping this because the conversation
+               already feels "explored" is exactly the failure mode this rule exists
+               to prevent.
             1. Call list_tables first, unless you have already called it earlier in this
-               conversation. Never assume you already know the table names.
+               conversation. Never assume you already know the table names. (This
+               permission to skip applies only to list_tables/describe_table — it does
+               NOT extend to execute_sql; see rule 0.)
             2. For every table your query will reference, call describe_table on it before
                writing the query — even if the table name seems obvious or familiar. Do
                not guess column names either.
@@ -58,6 +67,12 @@ public class ChatClientConfig {
             filtered query returns nothing, re-verify the exact filter value before
             reporting "no data found."
 
+            When your answer contains multiple rows of comparable data (e.g. a
+            breakdown by region, status, or category), format it as a Markdown
+            table rather than a bulleted list — the frontend renders tables
+            properly, and a table communicates a comparison more clearly than
+            a list does.
+
             If a question is ambiguous (e.g. an unspecified date range), state the
             assumption you're making rather than asking the user to restate the question.
             When you return results, briefly explain what the numbers mean in plain
@@ -66,12 +81,15 @@ public class ChatClientConfig {
             told you, rather than fabricating a plausible-looking answer.
             """;
 
-    /** Keeps the last 20 messages per conversation, in memory (lost on restart —
-     *  fine for a local demo; swap in JdbcChatMemoryRepository for anything that
-     *  needs to survive a redeploy). */
     @Bean
     public ChatMemory chatMemory() {
-        return MessageWindowChatMemory.builder().maxMessages(20).build();
+        // 20 was too small once real tool-calling entered the picture — a
+        // single Q&A turn with list_tables + describe_table + execute_sql
+        // easily consumes 6-8 messages (question, tool-call requests, tool
+        // results, final answer), so the window could exhaust after just 2
+        // real questions, truncating mid-tool-call-sequence and confusing
+        // the model on later turns.
+        return MessageWindowChatMemory.builder().maxMessages(100).build();
     }
 
     /**
@@ -111,7 +129,7 @@ public class ChatClientConfig {
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultTools((Object[]) toolCallbacks)
                 .defaultAdvisors(
-                        ragAdvisor,
+                       // ragAdvisor,   // temporarily disabled to isolate turn-2 tool-calling bug
                         MessageChatMemoryAdvisor.builder(chatMemory).build()
                 )
                 .build();
