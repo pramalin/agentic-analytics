@@ -14,11 +14,22 @@ interface Turn {
   latencyMs?: number;
 }
 
-const EXAMPLE_QUESTIONS = [
+const EXAMPLE_QUESTION_POOL = [
   "Declined transactions by region, last quarter",
   "Total transactions declined, across all time",
   "How many merchants are in the Northeast region?",
+  "What are the most common decline reasons?",
+  "Approved vs declined transaction counts, all time",
+  "Which region has the highest decline rate?",
+  "How many merchants do we have per region?",
+  "Total transaction volume in dollars, this month",
 ];
+
+function pickRandomQuestions(exclude: string[], count: number): string[] {
+  const pool = EXAMPLE_QUESTION_POOL.filter((q) => !exclude.includes(q));
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
 
 function newId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -29,6 +40,7 @@ function newId(): string {
 export default function App() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
+  const [suggestions, setSuggestions] = useState(() => pickRandomQuestions([], 3));
   const conversationId = useRef(newId());
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
@@ -56,6 +68,7 @@ export default function App() {
           t.id === id ? { ...t, status: "done", answer: result.answer, latencyMs } : t
         )
       );
+      setSuggestions((prev) => pickRandomQuestions([...prev, trimmed], 3));
     } catch (err) {
       const detail = err instanceof ApiError ? err.detail : "Unable to reach the data mart assistant.";
       setTurns((prev) =>
@@ -87,18 +100,6 @@ export default function App() {
           {turns.length === 0 && (
             <div className="empty-state">
               <p>No questions yet. Try one of these, or write your own below.</p>
-              <div className="example-chips">
-                {EXAMPLE_QUESTIONS.map((q) => (
-                  <button
-                    key={q}
-                    type="button"
-                    className="example-chip"
-                    onClick={() => submitQuestion(q)}
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
             </div>
           )}
 
@@ -140,6 +141,20 @@ export default function App() {
           ))}
           <div ref={transcriptEndRef} />
         </main>
+
+        <div className="suggestions-bar">
+          <span className="suggestions-label">Try:</span>
+          {suggestions.map((q) => (
+            <button
+              key={q}
+              type="button"
+              className="example-chip"
+              onClick={() => submitQuestion(q)}
+            >
+              {q}
+            </button>
+          ))}
+        </div>          
 
         <form className="composer" onSubmit={handleSubmit}>
           <label htmlFor="question-input" className="visually-hidden">
