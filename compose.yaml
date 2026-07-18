@@ -90,11 +90,12 @@ services:
         condition: service_healthy
       mcp-gateway:
         condition: service_healthy
-  
-  # End-user chat UI — talks to `application` directly from the browser
-  # (see QuestionController's @CrossOrigin), not through this container's
-  # network at all. depends_on here is about start order for a clean
-  # `docker compose up`, not a runtime dependency the browser cares about.
+
+  # End-user chat UI (Step 7) — talks to `application` directly from the
+  # browser (see QuestionController's @CrossOrigin), not through this
+  # container's network at all. depends_on here is about start order for a
+  # clean `docker compose up`, not a runtime dependency the browser cares
+  # about.
   frontend-react:
     build: ./frontend-react
     ports:
@@ -102,6 +103,19 @@ services:
     depends_on:
       application:
         condition: service_healthy
-        
+
+  # Internal engineering console (Step 9) — same idea as frontend-react:
+  # talks to `application` directly from the browser, not through this
+  # container's network. Shows the tool-call traces Step 8 added to
+  # /api/questions (tool name, arguments, result, timing) — not meant for
+  # end users, hence a separate app rather than a mode of frontend-react.
+  frontend-angular:
+    build: ./frontend-angular
+    ports:
+      - "4200:4200"
+    depends_on:
+      application:
+        condition: service_healthy
+
 volumes:
   pgdata:
