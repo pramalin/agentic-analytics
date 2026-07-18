@@ -8,6 +8,8 @@ Built as a portfolio project — Spring Boot 4 / Spring AI 2.0 backend, a
 React frontend, three swappable model providers (Anthropic, OpenAI, and
 fully local options), and a Docker Compose setup for local dev.
 
+![Screenshot of the assistant answering a question with a markdown table](docs/images/screenshot.png)
+
 ## What's here
 
 - **Agent** — Spring AI `ChatClient`, tool-calling over MCP, conversation memory
