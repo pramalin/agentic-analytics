@@ -71,11 +71,13 @@ export default function App() {
     <div className="page">
       <div className="sheet">
         <header className="masthead">
-          <p className="eyebrow">Data Mart Assistant</p>
-          <h1>Agentic Analytics</h1>
+          <p className="eyebrow">Enterprise Data Intelligence</p>
+
+          <h1>AI Data Mart Assistant</h1>
+
           <p className="subhead">
-            Ask a question in plain English. Answers are grounded against a read-only
-            data mart — nothing here can write.
+            Ask business questions in plain English and receive answers grounded in
+            verified, read-only enterprise data.
           </p>
         </header>
 
