@@ -702,3 +702,35 @@ WARNING: Unmatched cancel notification for request id 1133
 2026.07.18 09:16:56 INFO  no build target found for /home/pramalin/work/agentic-analytics/application/src/main/java/com/example/agenticanalytics/config/ChatClientConfig.java. Using fallback presentation compiler.
 2026.07.18 10:39:52 INFO  no build target found for /home/pramalin/work/agentic-analytics/application/src/main/java/com/example/agenticanalytics/config/ChatClientConfig.java. Using fallback presentation compiler.
 2026.07.18 10:40:07 INFO  no build target found for /home/pramalin/work/agentic-analytics/application/src/main/java/com/example/agenticanalytics/config/ChatClientConfig.java. Using fallback presentation compiler.
+2026.07.18 16:41:58 INFO  Shutting down server
+2026.07.18 16:41:58 INFO  Memory monitor stopped
+2026.07.18 16:41:58 INFO  shutting down Metals
+2026.07.18 16:41:58 INFO  Exiting server
+2026.07.18 16:41:58 ERROR Unexpected error initializing server: 
+org.eclipse.lsp4j.jsonrpc.ResponseErrorException: Request window/showMessageRequest failed with message: Canceled
+	at org.eclipse.lsp4j.jsonrpc.RemoteEndpoint.handleResponse(RemoteEndpoint.java:214)
+	at org.eclipse.lsp4j.jsonrpc.RemoteEndpoint.consume(RemoteEndpoint.java:198)
+	at org.eclipse.lsp4j.jsonrpc.json.StreamMessageProducer.handleMessage(StreamMessageProducer.java:189)
+	at org.eclipse.lsp4j.jsonrpc.json.StreamMessageProducer.listen(StreamMessageProducer.java:97)
+	at org.eclipse.lsp4j.jsonrpc.json.ConcurrentMessageProcessor.run(ConcurrentMessageProcessor.java:97)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:545)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:330)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+	at java.lang.Thread.run(Thread.java:1516)
+
+2026.07.19 12:18:43 INFO  Started: Metals version 1.6.7 in folders '/home/pramalin/work/agentic-analytics' for client Visual Studio Code 1.109.5.
+2026.07.19 12:18:43 INFO  Memory monitor started
+2026.07.19 12:18:43 WARN  Using H2 2.4.240 which is newer than the version Flyway has been verified with. The latest verified version of H2 is 2.3.232.
+2026.07.19 12:18:44 INFO  no build target found for /home/pramalin/work/agentic-analytics/llmsim/AnalyticsFlow.scala. Using presentation compiler with project's scala-library version: 3.3.7
+2026.07.19 12:18:46 INFO  no build target found for /home/pramalin/work/agentic-analytics/llmsim/AnalyticsFlow.scala. Using presentation compiler with project's scala-library version: 3.3.7
+2026.07.19 12:18:46 INFO  no build target found for /home/pramalin/work/agentic-analytics/llmsim/AnalyticsFlow.scala. Using presentation compiler with project's scala-library version: 3.3.7
+2026.07.19 12:18:50 INFO  no build target found for /home/pramalin/work/agentic-analytics/llmsim/AnalyticsFlow.scala. Using presentation compiler with project's scala-library version: 3.3.7
+2026.07.19 13:36:59 INFO  no build target found for /home/pramalin/work/agentic-analytics/llmsim/AnalyticsFlow.scala. Using presentation compiler with project's scala-library version: 3.3.7
+2026.07.19 13:36:59 INFO  no build target found for /home/pramalin/work/agentic-analytics/llmsim/AnalyticsFlow.scala. Using presentation compiler with project's scala-library version: 3.3.7
+2026.07.19 13:36:59 INFO  no build target found for /home/pramalin/work/agentic-analytics/llmsim/AnalyticsFlow.scala. Using presentation compiler with project's scala-library version: 3.3.7
+Jul 19, 2026 1:36:59 PM org.eclipse.lsp4j.jsonrpc.RemoteEndpoint handleCancellation
+WARNING: Unmatched cancel notification for request id 9
+2026.07.19 13:36:59 INFO  no build target found for /home/pramalin/work/agentic-analytics/llmsim/AnalyticsFlow.scala. Using presentation compiler with project's scala-library version: 3.3.7
+2026.07.19 13:37:00 INFO  no build target found for /home/pramalin/work/agentic-analytics/llmsim/AnalyticsFlow.scala. Using presentation compiler with project's scala-library version: 3.3.7
+2026.07.19 13:39:39 INFO  no build target found for /home/pramalin/work/agentic-analytics/llmsim/AnalyticsFlow.scala. Using presentation compiler with project's scala-library version: 3.3.7

@@ -1,0 +1,26 @@
+# llmsim as a stand-in "provider" -- exercises the exact same OpenAI-shaped
+# Spring AI code path as compose.openai.yaml (AI_MODEL_CHAT=openai), but
+# answers deterministically from a scripted local service instead of the
+# real API. See llmsim/AnalyticsFlow.scala for what it's scripted to do.
+#
+#   docker compose -f compose.yaml -f compose.llmsim.yaml up --build
+#
+# Use this INSTEAD OF compose.openai.yaml / compose.anthropic.yaml, not
+# stacked on top of one -- it's a complete provider overlay on its own.
+# No real API key needed; llmsim never checks it.
+
+services:
+  llmsim:
+    build: ./llmsim
+    ports:
+      - "8089:8089"   # optional, handy for curling llmsim directly
+
+  application:
+    environment:
+      - AI_MODEL_CHAT=openai
+      - OPENAI_API_KEY=unused
+      - OPENAI_MODEL_NAME=gpt-4o
+      - SPRING_AI_OPENAI_BASE_URL=http://llmsim:8089/v1
+    depends_on:
+      llmsim:
+        condition: service_started

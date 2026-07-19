@@ -96,6 +96,29 @@ docker compose down -v --remove-orphans
 docker compose -f compose.yaml -f compose.openai.yaml up --build
 ```
 
+### Option D — llmsim (deterministic, for testing — not for actual use)
+
+No API key, no cloud cost, no real model at all — a small, scripted
+stand-in ([llmsim](https://github.com/pramalin/llmsim)) that answers the
+exact wire protocol Spring AI expects, so the agent can't tell the
+difference, but with the model's behavior fully scripted instead of
+inferred. Useful for CI and local development when hitting a real
+provider on every run is undesirable (cost, latency, nondeterminism) or
+outright unavailable (no API key configured, no network access) — not a
+way to actually use the assistant, since it only ever answers the one
+scripted question in `llmsim/AnalyticsFlow.scala`.
+
+```bash
+docker compose down -v --remove-orphans
+docker compose -f compose.yaml -f compose.llmsim.yaml up --build
+```
+
+The script mirrors this app's actual required tool-calling sequence —
+`list_tables` → `describe_table` → `execute_sql` → a final reply built
+from execute_sql's real result — so it still exercises the full real MCP
+round trip (real Postgres data mart, real `mcp-gateway`) with only "what
+the model decides to do" held fixed.
+
 ### Whichever option, once it's up
 
 ```bash
@@ -168,9 +191,13 @@ agentic-analytics/
 ├── compose.yaml               # base: postgres, mcp-gateway, application, frontend-react, frontend-angular
 ├── compose.anthropic.yaml     # provider overlay: Anthropic API key/model
 ├── compose.docker-model-runner.yaml  # provider overlay: local, auto-started model
+├── compose.llmsim.yaml        # provider overlay: scripted, deterministic stand-in — no API key, no real model
 ├── compose.ollama.yaml        # provider overlay: local Ollama fallback, no API key
 ├── compose.openai.yaml        # provider overlay: real OpenAI cloud API key/model
 ├── mcp-config.yaml            # MCP gateway's database-server connection config
+├── llmsim/                    # scripted provider for compose.llmsim.yaml — see Option D above
+│   ├── AnalyticsFlow.scala    # scripts the agent's real tool-call sequence
+│   └── Dockerfile             # layers AnalyticsFlow.scala on the published llmsim engine
 ├── .env.example
 ├── README.md
 ├── docs/
