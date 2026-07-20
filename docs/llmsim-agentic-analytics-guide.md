@@ -1,7 +1,6 @@
 # Deterministic Testing for Agentic AI with llmsim
 
 `agentic-analytics` demonstrates a practical testing pattern for enterprise AI applications:
-
 > Replace only the external language model with a deterministic simulator, while keeping Spring AI, MCP Gateway, PostgreSQL, tool execution, HTTP calls, and the application code real.
 
 The companion project, [`llmsim`](https://github.com/pramalin/llmsim), provides the simulator. This repository shows how to use it in a real Spring AI application.
@@ -23,7 +22,6 @@ Agentic applications are harder to regression test than traditional request-resp
 When a real external model is involved, a regression test may fail because of model variation, latency, network availability, prompt sensitivity, API cost, or provider changes.
 
 For CI and repeatable local testing, we often want a narrower question:
-
 > Did the application still perform the expected agentic workflow?
 
 `llmsim` helps answer that question by scripting the model's decisions deterministically.
@@ -70,7 +68,7 @@ Only the model endpoint changes. The rest of the system remains real.
 
 For deterministic testing, this repository adds a provider overlay:
 
-```text
+```
 compose.llmsim.yaml
 ```
 
@@ -91,10 +89,10 @@ services:
       - SPRING_AI_OPENAI_BASE_URL=http://llmsim:8089/v1
     depends_on:
       llmsim:
-        condition: service_started
+        condition: service_healthy
 ```
 
-The API key is unused because `llmsim` does not call a real provider.
+The API key is unused because `llmsim` does not call a real provider. `llmsim`'s own image ships with a built-in `HEALTHCHECK`, so `condition: service_healthy` (not `service_started`) is what actually waits for the JVM inside it to finish booting before `application` starts initializing against it.
 
 ---
 
@@ -102,7 +100,7 @@ The API key is unused because `llmsim` does not call a real provider.
 
 The current `agentic-analytics` simulation answers the question:
 
-```text
+```
 How many merchants do we have?
 ```
 
@@ -161,7 +159,7 @@ This section describes how to add `llmsim` to another project, using `agentic-an
 
 In the consuming application, add a folder for the simulator script:
 
-```text
+```
 agentic-analytics/
 └── llmsim/
     ├── Dockerfile
@@ -178,7 +176,7 @@ Do not copy the full `llmsim` source code into the application repository.
 
 In `agentic-analytics`, the script lives in:
 
-```text
+```
 llmsim/AnalyticsFlow.scala
 ```
 
@@ -239,14 +237,24 @@ RUN sbt assembly
 
 FROM eclipse-temurin:21-jre-jammy
 
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /build/target/scala-3.3.3/llmsim.jar /app/llmsim.jar
 
 ENV LLMSIM_SCRIPT=com.example.agenticanalytics.llmsim.AnalyticsFlow
 
 EXPOSE 8089
 
+HEALTHCHECK --interval=2s --timeout=2s --retries=20 --start-period=5s \
+  CMD curl --fail --silent http://localhost:8089/_llmsim/calls || exit 1
+
 ENTRYPOINT ["java", "-jar", "/app/llmsim.jar"]
 ```
+
+`curl` and the `HEALTHCHECK` aren't for llmsim's own use -- they exist so a
+consuming project's `docker-compose.yaml` can rely on
+`condition: service_healthy` (see step 4) instead of `service_started`,
+without needing to declare its own healthcheck block.
 
 This pattern keeps responsibilities clean:
 
@@ -262,7 +270,7 @@ Pin the image version in real projects. Avoid relying on `latest` in CI.
 
 Add a provider overlay similar to:
 
-```text
+```
 compose.llmsim.yaml
 ```
 
@@ -283,16 +291,16 @@ services:
       - SPRING_AI_OPENAI_BASE_URL=http://llmsim:8089/v1
     depends_on:
       llmsim:
-        condition: service_started
+        condition: service_healthy
 ```
 
 The key setting is:
 
-```text
+```
 SPRING_AI_OPENAI_BASE_URL=http://llmsim:8089/v1
 ```
 
-That causes Spring AI's normal OpenAI-compatible client to call `llmsim` instead of a real cloud provider.
+That causes Spring AI's normal OpenAI-compatible client to call `llmsim` instead of a real cloud provider. `condition: service_healthy` relies on the `HEALTHCHECK` baked into the image in step 3 -- without it, `application` could start initializing while the llmsim JVM is still booting.
 
 ---
 
@@ -315,7 +323,7 @@ curl -X POST http://localhost:8080/api/questions \
 
 Expected result:
 
-```text
+```
 There are 6 merchants.
 ```
 
@@ -351,7 +359,7 @@ For `agentic-analytics`, the test should verify:
 
 A high-value assertion set looks like this:
 
-```text
+```
 Expected tool order:
 1. list_tables
 2. describe_table
@@ -373,71 +381,49 @@ This detects regressions in tool discovery, serialization, MCP wiring, SQL gener
 
 ## 8. GitHub Actions pattern
 
-A CI workflow can run the same stack:
+`agentic-analytics` already implements this as real, reusable files rather
+than an inline example -- use those directly instead of hand-rolling a
+simplified version:
 
-```yaml
-name: llmsim e2e
+- [`scripts/e2e-test.sh`](../scripts/e2e-test.sh) -- brings the stack up
+  from a clean slate, waits for `application`'s actuator readiness
+  endpoint, asks the scripted question, and asserts on exactly the tool
+  order, arguments, and final-answer shape listed in step 7 above (this
+  script is what actually implements that assertion set). On any
+  failure, it writes the full response, llmsim's call journal, and every
+  container's logs to `artifacts/` *before* tearing the stack down --
+  writing them from inside the script itself matters, because a separate
+  step running afterward would find nothing; the stack is already gone
+  by then.
+- [`.github/workflows/e2e-test.yml`](../.github/workflows/e2e-test.yml)
+  -- runs that same script on every push to `main` and every pull
+  request, and uploads `artifacts/` as a downloadable GitHub Actions
+  artifact if the run fails.
 
-on:
-  push:
-  pull_request:
+Run it identically, locally or in CI:
 
-jobs:
-  e2e:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Start deterministic stack
-        run: |
-          docker compose down -v --remove-orphans || true
-          docker compose -f compose.yaml -f compose.llmsim.yaml up --build -d
-
-      - name: Wait for application
-        run: |
-          for i in {1..60}; do
-            if curl -fsS http://localhost:8080/actuator/health >/dev/null; then
-              exit 0
-            fi
-            sleep 2
-          done
-          docker compose -f compose.yaml -f compose.llmsim.yaml logs --no-color
-          exit 1
-
-      - name: Run deterministic question
-        run: |
-          curl -fsS -X POST http://localhost:8080/api/questions \
-            -H "Content-Type: application/json" \
-            -d '{"question":"How many merchants do we have?"}'
-
-      - name: Show llmsim journal
-        if: always()
-        run: |
-          curl -s http://localhost:8089/_llmsim/calls || true
-
-      - name: Stop stack
-        if: always()
-        run: |
-          docker compose -f compose.yaml -f compose.llmsim.yaml down -v --remove-orphans
+```bash
+./scripts/e2e-test.sh
 ```
 
-In a production-grade workflow, put the actual assertions in a shell script or test runner rather than only printing the response.
+There's no separate CI-only logic to maintain -- the script is the single
+source of truth for what "passing" means, in both places.
 
 ---
 
 ## 9. Recommended diagnostics
 
-When CI fails, capture the full Compose state and logs:
+`scripts/e2e-test.sh` already captures this automatically on any failure,
+writing to `artifacts/` before the stack tears down:
 
 ```bash
 docker compose -f compose.yaml -f compose.llmsim.yaml ps -a
-docker compose -f compose.yaml -f compose.llmsim.yaml logs --no-color application
-docker compose -f compose.yaml -f compose.llmsim.yaml logs --no-color llmsim
-docker compose -f compose.yaml -f compose.llmsim.yaml logs --no-color mcp-gateway
+docker compose -f compose.yaml -f compose.llmsim.yaml logs --no-color
 ```
 
-For GitHub Actions, upload logs as artifacts on failure.
+along with the raw API response and llmsim's call journal. In CI, this is
+what ends up in the downloadable `e2e-diagnostics` artifact when a run
+fails (see step 8) -- nothing extra to configure.
 
 ---
 
@@ -493,7 +479,6 @@ Useful next capabilities include:
 ## Summary
 
 `llmsim` and `agentic-analytics` together show a practical engineering pattern:
-
 > Treat the LLM as a replaceable provider during testing, but keep the rest of the agentic system real.
 
 This gives developers deterministic regression tests without sacrificing the integration coverage that makes end-to-end tests valuable.
