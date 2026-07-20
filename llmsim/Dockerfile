@@ -8,7 +8,10 @@ COPY AnalyticsFlow.scala /build/src/main/scala/com/example/agenticanalytics/llms
 RUN sbt assembly
 
 FROM eclipse-temurin:21-jre-jammy
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 COPY --from=build /build/target/scala-3.3.3/llmsim.jar /app/llmsim.jar
 ENV LLMSIM_SCRIPT=com.example.agenticanalytics.llmsim.AnalyticsFlow
 EXPOSE 8089
+HEALTHCHECK --interval=2s --timeout=2s --retries=20 --start-period=5s \
+  CMD curl --fail --silent http://localhost:8089/_llmsim/calls || exit 1
 ENTRYPOINT ["java", "-jar", "/app/llmsim.jar"]

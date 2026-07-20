@@ -18,9 +18,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run the llmsim-backed end-to-end test
         run: |
           chmod +x scripts/e2e-test.sh
           ./scripts/e2e-test.sh
+
+      # scripts/e2e-test.sh writes diagnostics to ./artifacts/ itself, from
+      # inside its own failure paths, BEFORE its cleanup trap tears the
+      # stack down -- a separate step running after this one would find
+      # nothing, since by then `docker compose down -v` has already run.
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-diagnostics
+          path: artifacts/
+          if-no-files-found: ignore

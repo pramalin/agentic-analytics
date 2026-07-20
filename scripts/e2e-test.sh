@@ -52,7 +52,10 @@ for i in $(seq 1 60); do
 done
 if [ "$READY" != "true" ]; then
   echo "FAIL: application did not become ready in time"
-  $COMPOSE logs
+  mkdir -p artifacts
+  $COMPOSE ps -a > artifacts/compose-ps.txt 2>&1 || true
+  $COMPOSE logs --no-color > artifacts/compose-logs.txt 2>&1 || true
+  cat artifacts/compose-logs.txt
   exit 1
 fi
 
@@ -65,10 +68,22 @@ echo "$RESPONSE" | jq .
 
 fail() {
   echo "FAIL: $1"
+  mkdir -p artifacts
+  echo "$RESPONSE" | jq . > artifacts/response.json 2>/dev/null || echo "$RESPONSE" > artifacts/response.json
+  curl -s http://localhost:8089/_llmsim/calls | jq . > artifacts/llmsim-calls.json 2>/dev/null || true
+  $COMPOSE ps -a > artifacts/compose-ps.txt 2>&1 || true
+  $COMPOSE logs --no-color > artifacts/compose-logs.txt 2>&1 || true
+  # Also echo to the job log directly, for a quick look without downloading
+  # the artifact -- the files above are the durable copy, captured here
+  # (before the EXIT trap tears the stack down) rather than in a separate
+  # workflow step, which would find nothing: by the time a later step ran,
+  # `down -v` would have already removed everything.
   echo "--- full response ---"
-  echo "$RESPONSE" | jq .
+  cat artifacts/response.json
   echo "--- llmsim call journal ---"
-  curl -s http://localhost:8089/_llmsim/calls | jq . || true
+  cat artifacts/llmsim-calls.json
+  echo "--- container logs (see artifacts/compose-logs.txt for the full copy) ---"
+  tail -c 4000 artifacts/compose-logs.txt
   exit 1
 }
 

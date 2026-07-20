@@ -23,4 +23,4 @@ services:
       - SPRING_AI_OPENAI_BASE_URL=http://llmsim:8089/v1
     depends_on:
       llmsim:
-        condition: service_started
+        condition: service_healthy
