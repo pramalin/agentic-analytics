@@ -1,5 +1,7 @@
 # agentic-analytics
 
+[![End-to-end tests](https://github.com/pramalin/agentic-analytics/actions/workflows/e2e-test.yml/badge.svg)](https://github.com/pramalin/agentic-analytics/actions/workflows/e2e-test.yml)
+
 A natural-language analytics agent built with Spring AI: ask a plain-English
 question, the agent queries a Postgres data mart through tools exposed over
 a real MCP (Model Context Protocol) gateway, and returns an answer.
@@ -167,12 +169,29 @@ npm install
 ng serve   # http://localhost:4200
 ```
 
-Run the tests (Docker must be running — several test classes spin up their
-own Postgres container via Testcontainers; no real API key or MCP gateway
-needed, all disabled/placeholder'd for the full-context tests):
+## Testing
+
+Unit and integration tests (Docker must be running — several test classes
+spin up their own Postgres container via Testcontainers; no real API key
+or MCP gateway needed, all disabled/placeholder'd for the full-context
+tests):
 ```bash
 cd application && mvn test
 ```
+
+End-to-end regression test — brings up the *real* stack (real Postgres,
+real `mcp-gateway`, real Spring AI) with [llmsim](https://github.com/pramalin/llmsim)
+standing in for the model provider (see Option D above), asks the agent
+a question, and asserts on both the final answer and the full tool-call
+trace (`list_tables` → `describe_table` → `execute_sql`, in order, with
+the right arguments) — not just "did it answer something":
+```bash
+./scripts/e2e-test.sh
+```
+Runs automatically in CI on every push to `main` and every PR
+(`.github/workflows/e2e-test.yml`) — the badge at the top of this README
+reflects its current status. It tears the whole stack down on exit, pass
+or fail, so it never leaves containers running behind it.
 
 ## Docs
 
@@ -198,6 +217,11 @@ agentic-analytics/
 ├── llmsim/                    # scripted provider for compose.llmsim.yaml — see Option D above
 │   ├── AnalyticsFlow.scala    # scripts the agent's real tool-call sequence
 │   └── Dockerfile             # layers AnalyticsFlow.scala on the published llmsim engine
+├── scripts/
+│   └── e2e-test.sh            # end-to-end regression test, see "Testing" above
+├── .github/
+│   └── workflows/
+│       └── e2e-test.yml       # runs scripts/e2e-test.sh on every push/PR
 ├── .env.example
 ├── README.md
 ├── docs/
