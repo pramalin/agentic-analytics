@@ -195,6 +195,9 @@ or fail, so it never leaves containers running behind it.
 
 ## Docs
 
+- [`docs/llmsim-agentic-analytics-guide.md`](docs/llmsim-agentic-analytics-guide.md) —
+  deterministic testing with llmsim: how the pattern works, and a
+  step-by-step guide to adding it to another Spring AI application.
 - [`docs/development-log.md`](docs/development-log.md) — the full
   step-by-step build history: what got built, what broke, how it was
   found, and why specific decisions were made.
@@ -225,6 +228,7 @@ agentic-analytics/
 ├── .env.example
 ├── README.md
 ├── docs/
+│   ├── llmsim-agentic-analytics-guide.md
 │   ├── development-log.md
 │   ├── mcp-gateway.md
 │   ├── rag.md
