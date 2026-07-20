@@ -1,0 +1,26 @@
+name: End-to-end regression test
+
+# Brings up the real stack (real Postgres, real mcp-gateway, real Spring AI)
+# with llmsim standing in for the model provider, and asserts on the full
+# agent flow -- see scripts/e2e-test.sh for what's actually checked.
+#
+# docker, docker compose (v2 plugin), and jq are all preinstalled on
+# GitHub-hosted ubuntu-latest runners -- no setup steps needed. llmsim-build
+# is a public GHCR image, so no registry login is needed to pull it either.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run the llmsim-backed end-to-end test
+        run: |
+          chmod +x scripts/e2e-test.sh
+          ./scripts/e2e-test.sh
