@@ -1,0 +1,29 @@
+# Demo-specific llmsim image.
+#
+# This leaves the normal llmsim/Dockerfile and AnalyticsFlow.scala untouched, so
+# scripts/e2e-test.sh keeps its existing CI behavior.
+FROM ghcr.io/pramalin/llmsim-build:0.10.1 AS build
+
+COPY AnalyticsDemoFlow.scala \
+  /build/src/main/scala/com/example/agenticanalytics/llmsim/AnalyticsDemoFlow.scala
+
+RUN sbt assembly
+
+FROM eclipse-temurin:21-jre-jammy
+
+# compose.llmsim.yaml waits for llmsim with condition: service_healthy.
+# Install curl and define a health check against llmsim's management API.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /build/target/scala-3.3.3/llmsim.jar /app/llmsim.jar
+
+ENV LLMSIM_SCRIPT=com.example.agenticanalytics.llmsim.AnalyticsDemoFlow
+
+EXPOSE 8089
+
+HEALTHCHECK --interval=2s --timeout=2s --retries=30 --start-period=5s \
+  CMD curl --fail --silent http://localhost:8089/_llmsim/calls >/dev/null || exit 1
+
+ENTRYPOINT ["java", "-jar", "/app/llmsim.jar"]

@@ -1,2 +1,3 @@
 .env
 .metals/
+/artifacts/e2e-demo/

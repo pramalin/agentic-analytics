@@ -286,3 +286,38 @@ agentic-analytics/
             ├── rag/SchemaDocIngestorIT.java
             └── seed/SeedDataIT.java
 ```
+
+## Interactive llmsim end-to-end demo
+
+The normal regression test tears the stack down after verification:
+
+```bash
+./scripts/e2e-test.sh
+```
+
+For an interactive demonstration that includes a successful workflow, a real
+PostgreSQL/MCP tool failure, and deterministic llmsim script exhaustion, run:
+
+```bash
+./scripts/e2e-demo.sh
+```
+
+The demo leaves the environment running. Inspect the complete model-call
+journal at:
+
+```text
+http://localhost:8089/_llmsim/console
+```
+
+Stop it afterward with:
+
+```bash
+docker compose \
+  -f compose.yaml \
+  -f compose.llmsim.yaml \
+  -f compose.llmsim-demo.yaml \
+  down -v --remove-orphans
+```
+
+See [`docs/llmsim-e2e-demo.md`](docs/llmsim-e2e-demo.md) for the scenario
+design, expected results, and troubleshooting notes.

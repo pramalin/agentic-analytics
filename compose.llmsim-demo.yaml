@@ -1,0 +1,17 @@
+# Demo-only overlay.
+#
+# Stack it after compose.llmsim.yaml:
+#
+#   docker compose \
+#     -f compose.yaml \
+#     -f compose.llmsim.yaml \
+#     -f compose.llmsim-demo.yaml \
+#     up --build
+#
+# It changes only the llmsim build definition. The OpenAI-compatible Spring AI
+# configuration continues to come from compose.llmsim.yaml.
+services:
+  llmsim:
+    build:
+      context: ./llmsim
+      dockerfile: Dockerfile.demo
