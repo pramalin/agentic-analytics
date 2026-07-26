@@ -160,7 +160,7 @@ For the database failure, inspect the model request after
 `failure-query-missing-table`. It should contain the real failed tool result
 returned to Spring AI.
 
-![Screenshot of the `failure-query-missing-table` step](docs/images/e2e-demo-llmsim.png)
+![Screenshot of the `failure-query-missing-table` step](images/e2e-demo-llmsim.png)
 ## Stop the environment
 
 ```bash
